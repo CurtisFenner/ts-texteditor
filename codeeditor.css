@@ -1,0 +1,95 @@
+.codeeditor textarea::selection {
+	background: rgba(64, 192, 255, 0.5);
+}
+
+.codeeditor {
+	overflow: hidden;
+	display: grid;
+	grid-template-columns: var(--codeeditor-line-tray-width) 1fr;
+	font: var(--codeeditor-font);
+	line-height: var(--codeeditor-line-height);
+	padding: 0;
+	white-space: pre;
+	tab-size: var(--codeeditor-tab-size);
+}
+
+.codeeditor .linetray {
+	color: #AAA;
+	background: transparent;
+	position: relative;
+	user-select: none;
+	overflow: hidden;
+	pointer-events: none;
+}
+
+.codeeditor .line-number {
+	width: 100%;
+	text-align: right;
+}
+
+.codeeditor .line-number:last-of-type {
+	margin-bottom: var(--codeeditor-line-height);
+}
+
+.codeeditor .code-scroll {
+	position: absolute;
+	overflow-x: auto;
+	overflow-y: auto;
+	left: var(--codeeditor-line-tray-width);
+	right: 0;
+	top: 0;
+	bottom: 0;
+	scrollbar-gutter: always;
+}
+
+.codeeditor .background {
+	position: relative;
+	user-select: none;
+	width: fit-content;
+	min-width: 100%;
+	min-height: 100%;
+}
+
+.codeeditor .background .annotations {
+	position: absolute;
+}
+
+.codeeditor .code .line {
+	height: var(--codeeditor-line-height);
+	width: fit-content;
+}
+
+.codeeditor textarea {
+	caret-color: black;
+	color: transparent;
+	background: transparent;
+	font: var(--codeeditor-font);
+	line-height: var(--codeeditor-line-height);
+	tab-size: var(--codeeditor-tab-size);
+	resize: none;
+	overflow: clip;
+	border: none;
+	outline: none;
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	padding: 0;
+	margin: 0;
+	top: 0;
+}
+
+.codeeditor pre {
+	margin: 0;
+	padding: 0;
+	color: transparent;
+	background: transparent;
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	left: 0;
+	top: 0;
+	user-select: none;
+	pointer-events: none;
+	font: var(--codeeditor-font);
+	line-height: var(--codeeditor-line-height);
+}
