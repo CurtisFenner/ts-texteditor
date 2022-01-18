@@ -4,121 +4,6 @@ export interface TextPosition {
 	char0: number,
 }
 
-interface MonarchBracketDef {
-	open: string,
-	close: string,
-	token: string,
-};
-
-interface MonarchRule {
-	regex: RegExp,
-	action: MonarchAction,
-}
-
-interface MonarchAction {
-	token: string,
-
-	next?: string | "@pop",
-}
-
-export interface MonarchGrammar {
-	ignoreCase?: false,
-
-	defaultToken: string,
-
-	brackets?: MonarchBracketDef[],
-
-	tokenizer: MonarchTokenizer,
-}
-
-type MonarchTokenizer = Record<string, MonarchRule[]>;
-
-export class Lexer {
-	private schema: MonarchGrammar;
-	private defaultState: string;
-
-	constructor(schema: MonarchGrammar) {
-		this.schema = schema;
-		this.defaultState = "----";
-		for (let key in schema.tokenizer) {
-			this.defaultState = key;
-			break;
-		}
-		if (this.defaultState === "----") {
-			throw new Error("Lexer: schema must have at least one state");
-		}
-	}
-
-	lexFragment(initialState: string[], fragment: string): {
-		tokens: { token: string, lexeme: string }[],
-		next: string[],
-	} {
-		const state = initialState.slice();
-		const tokens = [];
-		let cursor = 0;
-
-		while (cursor < fragment.length) {
-			if (state.length === 0) {
-				state.push(this.defaultState);
-			}
-			const top = state[state.length - 1];
-			const rules = this.schema.tokenizer[top];
-			if (rules === undefined) {
-				throw new Error("Lexer: no such state `" + top + "`");
-			}
-
-			let progress = false;
-			for (const rule of rules) {
-				const re = new RegExp(rule.regex.source, "y");
-				re.lastIndex = cursor;
-				const match = re.exec(fragment);
-				if (match === null) {
-					continue;
-				} else if (match[0].length === 0) {
-					continue;
-				}
-				tokens.push({
-					token: rule.action.token,
-					lexeme: match[0],
-				});
-				cursor += match[0].length;
-				progress = true;
-				const next = rule.action.next;
-				if (next !== undefined) {
-					if (next === "@pop") {
-						state.pop();
-					} else if (next === "@push") {
-						state.push(top);
-					} else {
-						state.push(next);
-					}
-				}
-				break;
-			}
-			if (!progress) {
-				tokens.push({
-					token: this.schema.defaultToken,
-					lexeme: fragment[cursor],
-				});
-				cursor += 1;
-			}
-		}
-
-		const reconstruct = tokens.map(x => x.lexeme).join("");
-		if (reconstruct !== fragment) {
-			console.error("reconstructed mismatch:");
-			console.error("expected:", fragment);
-			console.error("produced:", reconstruct);
-			console.error(tokens);
-		}
-
-		return {
-			tokens,
-			next: state,
-		};
-	}
-}
-
 function setRangeText(
 	textarea: HTMLTextAreaElement,
 	text: string,
@@ -217,6 +102,13 @@ function assertEqual(given: any, expected: any) {
 	assertEqual(findLines(example, 0, 6), [0, 6]);
 }
 
+export interface Lexer {
+	lexFragment(initialState: string[], fragment: string): {
+		tokens: { token: string, lexeme: string }[],
+		next: string[],
+	},
+}
+
 export class Editor {
 	// <div class="codeeditor">:
 	//   <div class="linetray">
@@ -267,7 +159,7 @@ export class Editor {
 
 	constructor(container: HTMLDivElement) {
 		this.font = "16px monospace";
-		this.lineHeight = "22px";
+		this.lineHeight = "2em"; // "22px";
 		this.lineTrayWidth = "60px";
 
 		container.innerHTML = "";
@@ -373,6 +265,20 @@ export class Editor {
 				}
 				setRangeText(this.textarea, indent, start, end);
 				this.textarea.setSelectionRange(start + indent.length, start + indent.length);
+			} else {
+				if (e.data === "}") {
+					// Consider a de-indent.
+					const start = this.textarea.selectionStart - 1;
+					console.log("start:", start);
+					let lastNewLine = this.textarea.value.lastIndexOf("\n", start);
+					const preceding = this.textarea.value.substring(lastNewLine + 1, start);
+					console.log("maybe de-dent?", JSON.stringify(preceding));
+					if (preceding.endsWith("\t") && preceding.replace(/[ \t]/g, "") === "") {
+						console.log("try it");
+						setRangeText(this.textarea, e.data, start - 1, start + 1);
+						this.textarea.setSelectionRange(start, start);
+					}
+				}
 			}
 			this.rerender();
 		});
@@ -398,8 +304,8 @@ export class Editor {
 		this.rerender();
 	}
 
-	setGrammar(grammar: MonarchGrammar) {
-		this.lexer = new Lexer(grammar);
+	setLexer(lexer: Lexer) {
+		this.lexer = lexer;
 		this.rerender();
 	}
 
@@ -408,7 +314,7 @@ export class Editor {
 		// to: TextPosition,
 		fromOffset: number,
 		toOffset: number,
-		style: { bg: string, under: string },
+		style: { bg: string, under: string, className?: string },
 	): HTMLDivElement {
 		const div = document.createElement("div");
 
@@ -429,6 +335,9 @@ export class Editor {
 			box.style.height = rect.height.toFixed(0) + "px";
 			box.style.left = (rect.left - containerRect.left).toFixed(0) + "px";
 			box.style.top = (rect.top - containerRect.top).toFixed(0) + "px";
+			if (style.className !== undefined) {
+				box.classList.add(style.className);
+			}
 			div.appendChild(box);
 		}
 

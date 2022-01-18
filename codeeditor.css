@@ -63,9 +63,6 @@
 	caret-color: black;
 	color: transparent;
 	background: transparent;
-	font: var(--codeeditor-font);
-	line-height: var(--codeeditor-line-height);
-	tab-size: var(--codeeditor-tab-size);
 	resize: none;
 	overflow: clip;
 	border: none;
@@ -90,6 +87,38 @@
 	top: 0;
 	user-select: none;
 	pointer-events: none;
+}
+
+.codeeditor textarea, .codeeditor pre {
 	font: var(--codeeditor-font);
 	line-height: var(--codeeditor-line-height);
+	tab-size: var(--codeeditor-tab-size);
+}
+
+.tall {
+	padding: calc(var(--codeeditor-line-height) / 4) 0;
+	margin-top: calc(var(--codeeditor-line-height) / -4);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+}
+
+.hovering .tall {
+	background: rgba(0, 0, 0, 0.07) !important;
+}
+
+.tall .label {
+	position: relative;
+	display: none;
+	top: calc(var(--codeeditor-line-height) * -1.3);
+	vertical-align: middle;
+	text-align: center;
+	font-size: 70%;
+	height: 0;
+	color: gray;
+}
+
+.hovering .label {
+	display: block;
 }
