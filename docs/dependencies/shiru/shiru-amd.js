@@ -2851,6 +2851,7 @@ define("shiru/data", ["require", "exports"], function (require, exports) {
         /// explainEquality returns a sequences of keys linking the two values in
         /// the same component.
         explainEquality(a, b) {
+            var _a;
             // Perform BFS on the outgoing edges graph.
             const q = [{ n: a, parent: null }];
             for (let i = 0; i < q.length; i++) {
@@ -2865,14 +2866,20 @@ define("shiru/data", ["require", "exports"], function (require, exports) {
                     return keys;
                 }
                 for (const e of this.outgoingEdges.get(top.n)) {
-                    q.push({
-                        n: e.next,
-                        parent: top,
-                        key: e.key,
-                    });
+                    // The outgoingEdges graph is strictly a tree, so we can avoid
+                    // using a set for visited edges by simply skipping edges that
+                    // go directly backward.
+                    const isBackEdge = e.next === ((_a = top.parent) === null || _a === void 0 ? void 0 : _a.n);
+                    if (!isBackEdge) {
+                        q.push({
+                            n: e.next,
+                            parent: top,
+                            key: e.key,
+                        });
+                    }
                 }
             }
-            throw new Error(`objects ${a} and ${b} are in different components`);
+            throw new Error(`objects ${String(a)} and ${String(b)} are in different components`);
         }
         /// union updates this datastructure to join the equivalence classes of
         /// objects a and b.
